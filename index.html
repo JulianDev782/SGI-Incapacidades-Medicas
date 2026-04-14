@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGI - Sistema Inteligente</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h2>SGI</h2>
+            <nav>
+                <ul>
+                    <li class="active">Nueva Incapacidad</li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <h1>Registro de Incapacidad</h1>
+            </header>
+
+            <section class="content-grid">
+                <div class="card">
+                    <h3>Datos del Colaborador</h3>
+                    <form id="incapacidadForm">
+                        <input type="text" id="nombre" placeholder="Nombre completo" required>
+                        <input type="text" id="cedula" placeholder="Cédula" required>
+                        <textarea id="diagnostico" placeholder="Descripción médica..." required></textarea>
+                        <input type="number" id="dias" placeholder="Días solicitados" required>
+                        <button type="button" onclick="analizarIA()">Analizar con IA</button>
+                    </form>
+                </div>
+
+                <div class="card ai-panel">
+                    <h3>Asistente IA</h3>
+                    <div id="aiResponse">
+                        <p>Esperando datos...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
