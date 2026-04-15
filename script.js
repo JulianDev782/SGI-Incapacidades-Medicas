@@ -1,73 +1,93 @@
-// 1. Definición de la Clase (POO)
+// Clase principal basada en las pautas del manual de Gestión Humana
 class AnalizadorIncapacidad {
     constructor(nombre, diagnostico, dias) {
         this.nombre = nombre;
-        this.diagnostico = diagnostico.toLowerCase(); // Convertimos a minúscula para que no falle por mayúsculas
+        this.diagnostico = diagnostico.toLowerCase();
         this.dias = parseInt(dias);
     }
 
-    // El método que contiene la lógica de la "IA"
     obtenerRecomendacion() {
-        // Validación de seguridad para números negativos o letras en vez de números
-        if (this.dias <= 0 || isNaN(this.dias)) {
-            return "❌ <strong>Error:</strong> La cantidad de días debe ser un número positivo.";
-        }
-
-        // Base de conocimientos de nuestra IA
+        // Base de conocimiento extraída del PDF (Actividades 1 y 3)
         const baseConocimiento = {
-            "gripe": 3,
-            "gripa": 3,
-            "influenza": 5,
-            "fractura": 30,
-            "accidente laboral": 15,
-            "cirugia": 20,
-            "estres": 7,
-            "migraña": 2
+            "gripe": { maxDias: 3, mensaje: "Tratamiento de origen común." },
+            "fractura": { maxDias: 30, mensaje: "Requiere seguimiento detallado." },
+            "accidente laboral": { maxDias: 15, mensaje: "Reportar a la ARL (Sucesos repentinos)." },
+            "accidente de transito": { maxDias: 10, mensaje: "Obligatorio Furips y Epicrisis." },
+            "estres": { maxDias: 5, mensaje: "Remitir a salud ocupacional." }
         };
 
-        let sugerencia = 0;
-        let encontrado = false;
+        // Regla del manual: Epicrisis obligatoria si es > 2 días o casos de accidentes
+        let necesitaEpicrisis = this.dias > 2 || 
+                                this.diagnostico.includes("transito") || 
+                                this.diagnostico.includes("laboral");
 
-        // Buscamos la palabra clave en el diagnóstico
-        for (let enfermedad in baseConocimiento) {
-            if (this.diagnostico.includes(enfermedad)) {
-                sugerencia = baseConocimiento[enfermedad];
-                encontrado = true;
-                break;
+        let recomendacion = "";
+
+        if (baseConocimiento[this.diagnostico]) {
+            const info = baseConocimiento[this.diagnostico];
+            if (this.dias > info.maxDias) {
+                recomendacion = `⚠️ **Alerta:** Los días exceden el estándar (${info.maxDias}). ${info.mensaje}`;
+            } else {
+                recomendacion = `✅ **Validado:** Datos coherentes con el manual. ${info.mensaje}`;
             }
-        }
-
-        // Si no encontramos la enfermedad
-        if (!encontrado) {
-            return `🤖 <strong>Análisis IA:</strong> No reconozco el término "${this.diagnostico}". Por seguridad, requiere revisión de un médico auditor.`;
-        }
-
-        // Si los días solicitados son mayores a lo que sugiere la IA
-        if (this.dias > sugerencia) {
-            return `⚠️ <strong>Alerta IA:</strong> Los ${this.dias} días solicitados exceden el estándar para "${this.diagnostico}" (${sugerencia} días sugeridos).`;
         } else {
-            return `✅ <strong>Validación IA:</strong> Los ${this.dias} días solicitados para "${this.diagnostico}" son coherentes y están aprobados.`;
+            recomendacion = "🔍 **Análisis Manual:** Diagnóstico no frecuente. Verifique soportes médicos.";
         }
+
+        if (necesitaEpicrisis) {
+            recomendacion += " **Nota:** Adjuntar Epicrisis obligatoria.";
+        }
+
+        return recomendacion;
     }
 }
 
-// 2. Función que conecta el botón del HTML con la Clase
+// FUNCIÓN PARA ANALIZAR E INSERTAR
 function analizarIA() {
     const nombre = document.getElementById('nombre').value;
     const diag = document.getElementById('diagnostico').value;
     const dias = document.getElementById('dias').value;
     const respuestaDiv = document.getElementById('aiResponse');
+    const tabla = document.getElementById('cuerpoTabla');
 
-    // Validación de campos vacíos
     if (!nombre || !diag || !dias) {
-        respuestaDiv.innerHTML = "❌ Por favor, llena todos los campos.";
+        respuestaDiv.innerHTML = "<span style='color: red;'>❌ Complete todos los campos antes de analizar.</span>";
         return;
     }
 
-    // INSTANCIAMOS la clase (Aquí es donde aplicas POO)
+    // Instancia de POO
     const miRegistro = new AnalizadorIncapacidad(nombre, diag, dias);
+    const recomendacion = miRegistro.obtenerRecomendacion();
 
-    // Mostramos el resultado llamando al método de la clase
-    respuestaDiv.innerHTML = `<p>Analizando para: <strong>${miRegistro.nombre}</strong>...</p>
-                              <p>${miRegistro.obtenerRecomendacion()}</p>`;
+    // Mostrar resultado visual
+    respuestaDiv.innerHTML = `<strong>Análisis para ${miRegistro.nombre}:</strong><br>${recomendacion}`;
+
+    // AGREGAR AL HISTORIAL AUTOMÁTICAMENTE
+    const nuevaFila = tabla.insertRow();
+    let esAprobado = recomendacion.includes('✅');
+    let colorEstado = esAprobado ? '#27ae60' : '#e67e22';
+    let textoEstado = esAprobado ? 'Aceptada' : 'En Revisión';
+
+    nuevaFila.innerHTML = `
+        <td>${miRegistro.nombre}</td>
+        <td>${miRegistro.diagnostico}</td>
+        <td>${miRegistro.dias}</td>
+        <td style="color: ${colorEstado}; font-weight: bold;">${textoEstado}</td>
+    `;
+}
+
+// FUNCIÓN PARA EL BOTÓN "NUEVA INCAPACIDAD" (LIMPIAR)
+function nuevaIncapacidad() {
+    // 1. Limpiar los inputs
+    document.getElementById('nombre').value = "";
+    document.getElementById('diagnostico').value = "";
+    document.getElementById('dias').value = "";
+    
+    // 2. Reiniciar el mensaje de la IA
+    document.getElementById('aiResponse').innerHTML = "Esperando datos para análisis...";
+    
+    // 3. Poner el foco en el primer campo para rapidez
+    document.getElementById('nombre').focus();
+    
+    console.log("Formulario reiniciado para nuevo registro.");
 }
