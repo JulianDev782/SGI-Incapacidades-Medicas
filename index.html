@@ -2,79 +2,55 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGI - Panel Administrativo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>SGI AI - Gestión de Incapacidades</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div class="sidebar">
-        <div class="logo">SGI</div>
-        <button class="btn-sidebar" onclick="nuevaIncapacidad()"><i class="fas fa-plus"></i> Nueva Incapacidad</button>
-        <ul class="nav-links">
-            <li class="active"><i class="fas fa-th-large"></i> Dashboard</li>
-            <li><i class="fas fa-clipboard-list"></i> Incapacidades</li>
-            <li><i class="fas fa-users"></i> Colaboradores</li>
-            <li><i class="fas fa-chart-bar"></i> Reportes</li>
+    <aside class="sidebar">
+        <h2>SGI</h2>
+        <button class="btn-nuevo-sidebar" onclick="nuevaIncapacidad()">+ Nueva Incapacidad</button>
+        <ul class="menu-list">
+            <li class="active">Dashboard</li>
+            <li>Incapacidades</li>
+            <li>Colaboradores</li>
+            <li>Reportes</li>
         </ul>
-    </div>
+    </aside>
 
-    <div class="main-content">
-        <div class="header">
+    <main class="main-content">
+        <header>
             <h1>Dashboard de Control de Incapacidades</h1>
-        </div>
+            <div style="color: #607d8b;">Auxiliar GH - Pereira 👤</div>
+        </header>
 
-        <div class="kpi-container">
-            <div class="kpi-card">
-                <div class="kpi-title">Total Incapacidades</div>
-                <div class="kpi-value">245</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Pendientes Transcripción</div>
-                <div class="kpi-value">32</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Alertas > 180 Días</div>
-                <div class="kpi-value">7</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Pagos Conciliados</div>
-                <div class="kpi-value">180</div>
-            </div>
-        </div>
+        <section class="stats-grid">
+            <div class="stat-card"><h4>Total Incapacidades</h4><p id="totalCount">0</p></div>
+            <div class="stat-card"><h4>Pendientes</h4><p id="pendingCount">0</p></div>
+            <div class="stat-card"><h4>En Revisión</h4><p id="reviCount">0</p></div>
+            <div class="stat-card"><h4>Aprobadas</h4><p id="approvedCount">0</p></div>
+        </section>
 
-        <div class="lower-section">
-            
-            <div class="card">
-                <h3>Últimas Incapacidades (Seguimiento Actividad 4)</h3>
-                <table id="tablaIncapacidades">
-                    <thead>
-                        <tr>
-                            <th>Colaborador</th>
-                            <th>Diagnóstico</th>
-                            <th>Días</th>
-                            <th>Estado IA</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cuerpoTabla">
-                        </tbody>
-                </table>
+        <section class="card">
+            <h3>Registro de Datos</h3>
+            <div class="form-row">
+                <input type="text" id="nombre" placeholder="Nombre del Colaborador">
+                <input type="text" id="diagnostico" placeholder="Origen / Diagnóstico">
+                <input type="number" id="dias" placeholder="Días">
             </div>
+            <button class="btn-analizar" onclick="analizarIA()">Analizar e Ingresar</button>
+            <div id="aiResponse" style="margin-top:15px; font-style:italic; color:#546e7a;">Esperando datos...</div>
+        </section>
 
-            <div class="card form-card">
-                <h3><i class="fas fa-robot"></i> Asistente IA</h3>
-                <form id="formIncapacidad">
-                    <input type="text" id="nombre" placeholder="Nombre Colaborador">
-                    <input type="text" id="diagnostico" placeholder="Ej: Gripe, Accidente laboral...">
-                    <input type="number" id="dias" placeholder="Días">
-                    <button type="button" class="btn-analizar" onclick="analizarIA()">Analizar e Ingresar</button>
-                </form>
-                <div id="aiResponse">Esperando datos...</div>
-            </div>
-        </div>
-
-    </div>
+        <section class="card">
+            <h3>Últimas Incapacidades</h3>
+            <table>
+                <thead>
+                    <tr><th>Colaborador</th><th>Diagnóstico</th><th>Días</th><th>Estado IA</th></tr>
+                </thead>
+                <tbody id="cuerpoTabla"></tbody>
+            </table>
+        </section>
+    </main>
 
     <script src="script.js"></script>
 </body>
