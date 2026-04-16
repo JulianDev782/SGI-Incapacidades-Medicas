@@ -2,41 +2,78 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGI - Gestión de Incapacidades</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGI - Panel Administrativo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Sistema de Gestión de Incapacidades (IA)</h1>
-        
-        <form id="formIncapacidad">
-            <input type="text" id="nombre" placeholder="Nombre del Colaborador">
-            <input type="text" id="diagnostico" placeholder="Ej: Gripe, Accidente laboral...">
-            <input type="number" id="dias" placeholder="Número de días">
-            
-            <div class="botones">
-                <button type="button" onclick="analizarIA()">Analizar e Ingresar</button>
-                <button type="button" onclick="nuevaIncapacidad()">Nueva Incapacidad</button>
+
+    <div class="sidebar">
+        <div class="logo">SGI</div>
+        <button class="btn-sidebar" onclick="nuevaIncapacidad()"><i class="fas fa-plus"></i> Nueva Incapacidad</button>
+        <ul class="nav-links">
+            <li class="active"><i class="fas fa-th-large"></i> Dashboard</li>
+            <li><i class="fas fa-clipboard-list"></i> Incapacidades</li>
+            <li><i class="fas fa-users"></i> Colaboradores</li>
+            <li><i class="fas fa-chart-bar"></i> Reportes</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Dashboard de Control de Incapacidades</h1>
+        </div>
+
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-title">Total Incapacidades</div>
+                <div class="kpi-value">245</div>
             </div>
-        </form>
+            <div class="kpi-card">
+                <div class="kpi-title">Pendientes Transcripción</div>
+                <div class="kpi-value">32</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Alertas > 180 Días</div>
+                <div class="kpi-value">7</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Pagos Conciliados</div>
+                <div class="kpi-value">180</div>
+            </div>
+        </div>
 
-        <div id="aiResponse" class="resultado">Esperando datos para análisis...</div>
+        <div class="lower-section">
+            
+            <div class="card">
+                <h3>Últimas Incapacidades (Seguimiento Actividad 4)</h3>
+                <table id="tablaIncapacidades">
+                    <thead>
+                        <tr>
+                            <th>Colaborador</th>
+                            <th>Diagnóstico</th>
+                            <th>Días</th>
+                            <th>Estado IA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        </tbody>
+                </table>
+            </div>
 
-        <section class="card-historial">
-            <h3><i class="fas fa-history"></i> Historial de Gestiones (Seguimiento)</h3>
-            <table id="tablaIncapacidades">
-                <thead>
-                    <tr>
-                        <th>Colaborador</th>
-                        <th>Origen / Diagnóstico</th>
-                        <th>Días</th>
-                        <th>Estado IA</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpoTabla">
-                    </tbody>
-            </table>
-        </section>
+            <div class="card form-card">
+                <h3><i class="fas fa-robot"></i> Asistente IA</h3>
+                <form id="formIncapacidad">
+                    <input type="text" id="nombre" placeholder="Nombre Colaborador">
+                    <input type="text" id="diagnostico" placeholder="Ej: Gripe, Accidente laboral...">
+                    <input type="number" id="dias" placeholder="Días">
+                    <button type="button" class="btn-analizar" onclick="analizarIA()">Analizar e Ingresar</button>
+                </form>
+                <div id="aiResponse">Esperando datos...</div>
+            </div>
+        </div>
+
     </div>
 
     <script src="script.js"></script>

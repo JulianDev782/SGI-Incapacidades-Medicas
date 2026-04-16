@@ -1,40 +1,49 @@
-// Clase principal basada en las pautas del manual de Gestión Humana
+/**
+ * PROYECTO: SGI - Sistema de Gestión de Incapacidades
+ * LÓGICA: Mejorada para detectar palabras clave
+ */
+
 class AnalizadorIncapacidad {
     constructor(nombre, diagnostico, dias) {
         this.nombre = nombre;
-        this.diagnostico = diagnostico.toLowerCase();
+        this.diagnostico = diagnostico.toLowerCase().trim();
         this.dias = parseInt(dias);
     }
 
     obtenerRecomendacion() {
-        // Base de conocimiento extraída del PDF (Actividades 1 y 3)
-        const baseConocimiento = {
-            "gripe": { maxDias: 3, mensaje: "Tratamiento de origen común." },
-            "fractura": { maxDias: 30, mensaje: "Requiere seguimiento detallado." },
-            "accidente laboral": { maxDias: 15, mensaje: "Reportar a la ARL (Sucesos repentinos)." },
-            "accidente de transito": { maxDias: 10, mensaje: "Obligatorio Furips y Epicrisis." },
-            "estres": { maxDias: 5, mensaje: "Remitir a salud ocupacional." }
+        // Reglas del Manual
+        const reglas = {
+            gripe: { max: 3, msg: "Tratamiento de origen común." },
+            paternidad: { max: 14, msg: "Cargar Registro Civil. Plazo: 30 días para trámite." },
+            laboral: { max: 15, msg: "Reportar a la ARL (Sucesos repentinos)." },
+            transito: { max: 10, msg: "Obligatorio presentar FURIPS y Epicrisis." },
+            fractura: { max: 30, msg: "Requiere seguimiento y rehabilitación." }
         };
 
-        // Regla del manual: Epicrisis obligatoria si es > 2 días o casos de accidentes
-        let necesitaEpicrisis = this.dias > 2 || 
-                                this.diagnostico.includes("transito") || 
-                                this.diagnostico.includes("laboral");
-
         let recomendacion = "";
+        let encontrado = false;
 
-        if (baseConocimiento[this.diagnostico]) {
-            const info = baseConocimiento[this.diagnostico];
-            if (this.dias > info.maxDias) {
-                recomendacion = `⚠️ **Alerta:** Los días exceden el estándar (${info.maxDias}). ${info.mensaje}`;
-            } else {
-                recomendacion = `✅ **Validado:** Datos coherentes con el manual. ${info.mensaje}`;
+        // BUSCADOR INTELIGENTE: Busca si el texto contiene palabras clave
+        for (let clave in reglas) {
+            if (this.diagnostico.includes(clave)) {
+                encontrado = true;
+                const info = reglas[clave];
+                if (this.dias > info.max) {
+                    recomendacion = `⚠️ **Alerta:** Los días exceden el estándar (${info.max}). ${info.msg}`;
+                } else {
+                    recomendacion = `✅ **Validado:** Coincide con los lineamientos. ${info.msg}`;
+                }
+                break; 
             }
-        } else {
-            recomendacion = "🔍 **Análisis Manual:** Diagnóstico no frecuente. Verifique soportes médicos.";
         }
 
-        if (necesitaEpicrisis) {
+        if (!encontrado) {
+            recomendacion = "🔍 **Análisis Manual:** Diagnóstico no frecuente. Verifique soportes según Actividad 3.";
+        }
+
+        // Regla de Epicrisis
+        if (this.dias > 2 || this.diagnostico.includes("transito") || 
+            this.diagnostico.includes("laboral") || this.diagnostico.includes("paternidad")) {
             recomendacion += " **Nota:** Adjuntar Epicrisis obligatoria.";
         }
 
@@ -42,7 +51,6 @@ class AnalizadorIncapacidad {
     }
 }
 
-// FUNCIÓN PARA ANALIZAR E INSERTAR
 function analizarIA() {
     const nombre = document.getElementById('nombre').value;
     const diag = document.getElementById('diagnostico').value;
@@ -51,43 +59,30 @@ function analizarIA() {
     const tabla = document.getElementById('cuerpoTabla');
 
     if (!nombre || !diag || !dias) {
-        respuestaDiv.innerHTML = "<span style='color: red;'>❌ Complete todos los campos antes de analizar.</span>";
+        respuestaDiv.innerHTML = "<span style='color: #e74c3c;'>❌ Complete todos los campos.</span>";
         return;
     }
 
-    // Instancia de POO
     const miRegistro = new AnalizadorIncapacidad(nombre, diag, dias);
     const recomendacion = miRegistro.obtenerRecomendacion();
 
-    // Mostrar resultado visual
-    respuestaDiv.innerHTML = `<strong>Análisis para ${miRegistro.nombre}:</strong><br>${recomendacion}`;
+    respuestaDiv.innerHTML = `<strong>Resultado para ${miRegistro.nombre}:</strong><br>${recomendacion}`;
 
-    // AGREGAR AL HISTORIAL AUTOMÁTICAMENTE
-    const nuevaFila = tabla.insertRow();
+    const nuevaFila = tabla.insertRow(0);
     let esAprobado = recomendacion.includes('✅');
-    let colorEstado = esAprobado ? '#27ae60' : '#e67e22';
+    let claseEstado = esAprobado ? 'status-acepta' : 'status-revisa';
     let textoEstado = esAprobado ? 'Aceptada' : 'En Revisión';
 
     nuevaFila.innerHTML = `
-        <td>${miRegistro.nombre}</td>
-        <td>${miRegistro.diagnostico}</td>
+        <td style="font-weight: 500;">${miRegistro.nombre}</td>
+        <td style="text-transform: capitalize;">${miRegistro.diagnostico}</td>
         <td>${miRegistro.dias}</td>
-        <td style="color: ${colorEstado}; font-weight: bold;">${textoEstado}</td>
+        <td><span class="status ${claseEstado}">${textoEstado}</span></td>
     `;
 }
 
-// FUNCIÓN PARA EL BOTÓN "NUEVA INCAPACIDAD" (LIMPIAR)
 function nuevaIncapacidad() {
-    // 1. Limpiar los inputs
-    document.getElementById('nombre').value = "";
-    document.getElementById('diagnostico').value = "";
-    document.getElementById('dias').value = "";
-    
-    // 2. Reiniciar el mensaje de la IA
-    document.getElementById('aiResponse').innerHTML = "Esperando datos para análisis...";
-    
-    // 3. Poner el foco en el primer campo para rapidez
+    document.getElementById('formIncapacidad').reset();
+    document.getElementById('aiResponse').innerHTML = "Esperando datos...";
     document.getElementById('nombre').focus();
-    
-    console.log("Formulario reiniciado para nuevo registro.");
 }
