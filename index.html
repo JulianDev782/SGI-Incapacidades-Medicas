@@ -2,56 +2,89 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGI AI - Gestión de Incapacidades</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGI Pro - Sistema de Gestión de Incapacidades</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <aside class="sidebar">
-        <h2>SGI</h2>
-        <button class="btn-nuevo-sidebar" onclick="nuevaIncapacidad()">+ Nueva Incapacidad</button>
-        <ul class="menu-list">
-            <li class="active">Dashboard</li>
-            <li>Incapacidades</li>
-            <li>Colaboradores</li>
-            <li>Reportes</li>
-        </ul>
-    </aside>
 
-    <main class="main-content">
-        <header>
-            <h1>Dashboard de Control de Incapacidades</h1>
-            <div style="color: #607d8b;">Auxiliar GH - Pereira 👤</div>
-        </header>
+    <div id="login-screen" class="login-overlay">
+        <div class="login-box">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+            <h2>SGI Pro v4.0</h2>
+            <p style="color: #666; margin-bottom: 20px;">Acceso administrativo</p>
+            <input type="text" id="user" placeholder="Usuario (admin)">
+            <input type="password" id="pass" placeholder="Contraseña (1234)">
+            <button onclick="validarAcceso()">Entrar al Sistema</button>
+        </div>
+    </div>
 
-        <section class="stats-grid">
-            <div class="stat-card"><h4>Total Incapacidades</h4><p id="totalCount">0</p></div>
-            <div class="stat-card"><h4>Pendientes</h4><p id="pendingCount">0</p></div>
-            <div class="stat-card"><h4>En Revisión</h4><p id="reviCount">0</p></div>
-            <div class="stat-card"><h4>Aprobadas</h4><p id="approvedCount">0</p></div>
-        </section>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <h2>SGI Pro</h2>
+            <nav>
+                <button onclick="nuevaIncapacidad()">➕ Nueva Entrada</button>
+                <button onclick="recargarPagina()">🔄 Actualizar</button>
+                <button onclick="window.print()">🖨️ Generar PDF</button>
+                <button class="btn-danger" onclick="sistema.borrarDatos()">🗑️ Resetear</button>
+            </nav>
+        </aside>
 
-        <section class="card">
-            <h3>Registro de Datos</h3>
-            <div class="form-row">
-                <input type="text" id="nombre" placeholder="Nombre del Colaborador">
-                <input type="text" id="diagnostico" placeholder="Origen / Diagnóstico">
-                <input type="number" id="dias" placeholder="Días">
+        <main class="main-content">
+            <header>
+                <h1>Panel de Control de Ausentismo</h1>
+            </header>
+
+            <section class="stats-container">
+                <div class="card module-card">
+                    <h3>Colaboradores</h3>
+                    <p id="colabCount">0</p>
+                </div>
+                <div class="card module-card active">
+                    <h3>Incapacidades</h3>
+                    <p id="totalCount">0</p>
+                </div>
+                <div class="card module-card" onclick="sistema.exportarExcel()">
+                    <h3>Reportes</h3>
+                    <p style="font-size: 1rem;">Exportar CSV</p>
+                </div>
+            </section>
+
+            <div class="analytics-row">
+                <div id="resumenGestion" class="summary-dashboard"></div>
+                <div class="chart-box">
+                    <canvas id="graficaIncapacidades"></canvas>
+                </div>
             </div>
-            <button class="btn-analizar" onclick="analizarIA()">Analizar e Ingresar</button>
-            <div id="aiResponse" style="margin-top:15px; font-style:italic; color:#546e7a;">Esperando datos...</div>
-        </section>
 
-        <section class="card">
-            <h3>Últimas Incapacidades</h3>
-            <table>
-                <thead>
-                    <tr><th>Colaborador</th><th>Diagnóstico</th><th>Días</th><th>Estado IA</th></tr>
-                </thead>
-                <tbody id="cuerpoTabla"></tbody>
-            </table>
-        </section>
-    </main>
+            <section class="analysis-section">
+                <div class="form-container">
+                    <h3>Registro de Novedad</h3>
+                    <input type="number" id="cedula" placeholder="Cédula">
+                    <input type="text" id="nombre" placeholder="Nombre completo">
+                    <input type="text" id="diagnostico" placeholder="Diagnóstico médico">
+                    <input type="number" id="dias" placeholder="Días">
+                    <button class="btn-primary" onclick="analizarIA()">Analizar con IA</button>
+                </div>
+                <div id="aiResponse" class="response-box">Esperando datos...</div>
+            </section>
 
+            <section class="table-section">
+                <div class="table-header">
+                    <h3>Historial</h3>
+                    <input type="text" id="buscador" placeholder="🔍 Buscar..." onkeyup="sistema.filtrarTabla()">
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Cédula</th><th>Nombre</th><th>Diagnóstico</th><th>Fecha</th><th>Días</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
