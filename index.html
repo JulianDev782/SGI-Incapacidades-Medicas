@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGI Pro - Sistema de Gestión de Incapacidades</title>
+    <title>SGI Pro - Gestión Humana Sodimac</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,10 +11,10 @@
     <div id="login-screen" class="login-overlay">
         <div class="login-box">
             <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
-            <h2>SGI Pro v4.0</h2>
+            <h2>SGI Pro v5.9</h2>
             <p style="color: #666; margin-bottom: 20px;">Acceso administrativo</p>
-            <input type="text" id="user" placeholder="Usuario (admin)">
-            <input type="password" id="pass" placeholder="Contraseña (1234)">
+            <input type="text" id="user" placeholder="Usuario">
+            <input type="password" id="pass" placeholder="Contraseña">
             <button onclick="validarAcceso()">Entrar al Sistema</button>
         </div>
     </div>
@@ -71,12 +71,20 @@
 
             <section class="table-section">
                 <div class="table-header">
-                    <h3>Historial</h3>
+                    <h3>Historial de Gestión Normativa</h3>
                     <input type="text" id="buscador" placeholder="🔍 Buscar..." onkeyup="sistema.filtrarTabla()">
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Cédula</th><th>Nombre</th><th>Diagnóstico</th><th>Fecha</th><th>Días</th><th>Estado</th></tr>
+                        <tr>
+                            <th>Cédula</th>
+                            <th>Nombre</th>
+                            <th>Diagnóstico y Ley</th>
+                            <th>Fecha y Hora</th>
+                            <th>Días</th>
+                            <th>Estado</th>
+                            <th>Acción IA</th>
+                        </tr>
                     </thead>
                     <tbody id="cuerpoTabla"></tbody>
                 </table>

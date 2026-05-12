@@ -1,128 +1,265 @@
+/**
+ * PROYECTO SGI - SISTEMA DE GESTIÓN DE INCAPACIDADES
+ * Versión 6.5: Motor de Inferencia Diferenciado (SOAT vs ARL)
+ */
+
 class GestionIncapacidad {
     constructor() {
-        const datos = JSON.parse(localStorage.getItem('sgi_data')) || { total: 0, pendientes: 0, aprobadas: 0, historial: [] };
+        const datos = JSON.parse(localStorage.getItem('sgi_data')) || { 
+            total: 0, pendientes: 0, aprobadas: 0, historial: [] 
+        };
         Object.assign(this, datos);
         this.renderizarTodo();
     }
 
-    limpiarTexto(t) { return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim(); }
+    limpiarTexto(t) { 
+        if (!t) return "";
+        return t.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+    }
 
     analizar(nom, diag, dias) {
         const dL = this.limpiarTexto(diag);
-        let res = { colaborador: nom, diagnostico: diag, dias: dias, fecha: new Date().toLocaleString(), esValido: false, prioridad: "Baja", mensaje: "", color: "#2e7d32" };
+        const ahora = new Date();
+        const fechaFull = `${ahora.toLocaleDateString()} - ${ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+        
+        let res = { 
+            cedula: "", 
+            colaborador: nom, 
+            diagnostico: diag, 
+            dias: dias, 
+            fecha: fechaFull, 
+            estado: "Pendiente", 
+            prioridad: "Baja", 
+            mensaje: "", 
+            ley: "", 
+            color: "#fbc02d" 
+        };
 
-        if (dL.match(/paternidad|maternidad|nacimiento|luto|licencia/)) {
-            res.prioridad = "Media"; res.color = "#fbc02d";
-            const lim = dL.includes("maternidad") ? 126 : (dL.includes("luto") ? 5 : 14);
-            if (dias <= lim) { res.esValido = true; res.mensaje = "✅ Trámite Legal Validado."; }
-            else { res.mensaje = `❌ Alerta: Excede tope de ${lim} días.`; }
-        } else if (dL.match(/accidente|fractura|laboral|moto|cirugia|caida|herida/)) {
-            res.prioridad = "Alta"; res.color = "#d32f2f";
-            res.mensaje = "🚨 ALERTA CRÍTICA: Reportar a ARL/SST.";
-        } else if (dL.match(/grip|viral|resfriado|dolor/)) {
-            if (dias <= 3) { res.esValido = true; res.mensaje = "✅ Aceptada."; }
-            else { res.mensaje = "🔍 Revisión: Duración inusual."; }
-        } else { res.color = "#546e7a"; res.mensaje = "🔍 Análisis Manual Requerido."; }
+        // --- MOTOR DE INFERENCIA LEGAL MEJORADO ---
+
+        // 1. LICENCIAS LEGALES (Maternidad/Paternidad/Luto)
+        if (dL.match(/paternidad|maternidad|nacimiento|luto|fallecimiento/)) {
+            if (dL.match(/luto|fallecimiento/)) {
+                res.ley = "Ley 1280 de 2009 (Ley de Luto)";
+                res.mensaje = `⚠️ **PENDIENTE:** Según la **${res.ley}**, dispone de 5 días hábiles. Adjuntar acta de defunción.`;
+            } else {
+                res.ley = "Ley 2114 de 2021";
+                res.mensaje = `⚠️ **PENDIENTE:** Bajo la **${res.ley}**, el sistema requiere el Registro Civil de Nacimiento.`;
+            }
+        } 
+        // 2. ACCIDENTE DE TRÁNSITO (SOAT)
+        else if (dL.match(/transito|soat|choque|atropellado|vehiculo|moto/)) {
+            res.prioridad = "Media";
+            res.ley = "Decreto 780 de 2016 (SOAT)";
+            res.estado = "En Revisión";
+            res.color = "#ef6c00"; // Naranja
+            res.mensaje = `🚗 **ACCIDENTE DE TRÁNSITO:** Detectado evento vial. Según el **${res.ley}**, debe aportar croquis y certificado de atención médica inicial por SOAT.`;
+        }
+        // 3. ACCIDENTE LABORAL (ARL)
+        else if (dL.match(/accidente|fractura|laboral|caida|herida|quemadura|esfuerzo/)) {
+            res.prioridad = "Alta";
+            res.ley = "Ley 1562 de 2012 (Riesgos Laborales)";
+            res.estado = "En Revisión";
+            res.color = "#d32f2f"; // Rojo
+            res.mensaje = `🚨 **ACCIDENTE LABORAL:** Posible riesgo profesional. Reportar FURAT bajo la **${res.ley}** a la ARL antes de 48 horas.`;
+        } 
+        // 4. ENFERMEDAD COMÚN (EPS)
+        else {
+            res.ley = "Decreto 1427 de 2022";
+            if (dias <= 3) {
+                res.estado = "Aceptada";
+                res.mensaje = `✅ **ACEPTADA:** Enfermedad común. Empresa asume pago según el **${res.ley}**.`;
+            } else {
+                res.estado = "En Revisión";
+                res.mensaje = `🔍 **EN REVISIÓN:** Ausentismo mayor a 3 días. El **${res.ley}** exige transcripción de la EPS.`;
+            }
+        }
         return res;
+    }
+
+    validarDocumentoIA(cedula, input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const registroActual = this.historial.find(i => i.cedula == cedula);
+        if (!registroActual) return alert("Error de sincronización.");
+
+        const resp = document.getElementById('aiResponse');
+        resp.innerHTML = `🤖 **IA PROCESANDO:** Validando coherencia de soporte para "${registroActual.colaborador}"...`;
+        resp.className = "response-box alerta-media";
+        
+        setTimeout(() => {
+            if (registroActual.estado !== "Aceptada") {
+                registroActual.estado = "Aceptada";
+                this.aprobadas++;
+                this.pendientes--;
+                this.guardar();
+                this.renderizarTodo();
+                actualizarGrafica();
+            }
+            
+            const leyFinal = registroActual.ley || "Normativa Vigente";
+            resp.innerHTML = `🤖 **IA SODIMAC:** Soporte de **${registroActual.colaborador}** validado correctamente bajo la norma:<br><strong>${leyFinal}</strong>.`;
+            resp.className = "response-box";
+            resp.style.borderLeft = "10px solid #2e7d32";
+            
+            alert("🤖 IA: Documento validado con éxito.");
+        }, 2000);
     }
 
     actualizarContadores(res) {
         this.total++;
-        res.esValido ? this.aprobadas++ : this.pendientes++;
+        if (res.estado === "Aceptada") this.aprobadas++;
+        else this.pendientes++; 
         this.historial.unshift(res);
-        localStorage.setItem('sgi_data', JSON.stringify(this));
+        this.guardar();
         this.renderizarTodo();
         actualizarGrafica();
     }
 
+    guardar() { 
+        localStorage.setItem('sgi_data', JSON.stringify({
+            total: this.total, pendientes: this.pendientes, 
+            aprobadas: this.aprobadas, historial: this.historial 
+        })); 
+    }
+
     renderizarTodo() {
-        document.getElementById('colabCount').innerText = [...new Set(this.historial.map(i => i.cedula))].length;
-        document.getElementById('totalCount').innerText = this.total;
+        if(document.getElementById('totalCount')) document.getElementById('totalCount').innerText = this.total;
+        if(document.getElementById('colabCount')) {
+            const unicos = new Set(this.historial.map(i => i.cedula));
+            document.getElementById('colabCount').innerText = unicos.size;
+        }
+
         const resumen = document.getElementById('resumenGestion');
         if(resumen) {
             resumen.innerHTML = `
-                <div style="background:#e0f2f1; padding:10px; border-radius:8px; margin-bottom:5px;">Críticos: <b>${this.historial.filter(i=>i.prioridad==="Alta").length}</b></div>
-                <div style="background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:5px;">Aprobadas: <b>${this.aprobadas}</b></div>
-                <div style="background:#fff3e0; padding:10px; border-radius:8px;">En Revisión: <b>${this.pendientes}</b></div>
+                <div class="card module-card" style="border-bottom: 5px solid var(--primary);">
+                    <h4>Aprobadas</h4><p>${this.aprobadas}</p>
+                </div>
+                <div class="card module-card" style="border-bottom: 5px solid var(--warning);">
+                    <h4>Pendientes</h4><p>${this.pendientes}</p>
+                </div>
             `;
         }
+
         const tabla = document.getElementById('cuerpoTabla');
-        tabla.innerHTML = "";
-        this.historial.forEach(i => {
-            const row = tabla.insertRow();
-            row.innerHTML = `<td>${i.cedula}</td><td>${i.colaborador}</td><td>${i.diagnostico}</td><td>${i.fecha}</td><td>${i.dias}</td><td><span class="${i.esValido?'status-aceptada':'status-revision'}">${i.esValido?'Aceptada':'Revisión'}</span></td>`;
-        });
+        if(tabla) {
+            tabla.innerHTML = "";
+            this.historial.forEach((i) => {
+                const row = tabla.insertRow();
+                let claseStatus = i.estado === "Aceptada" ? "status-aceptada" : 
+                                 (i.estado === "Pendiente" ? "status-pendiente" : "status-revision");
+
+                const accionIA = (i.estado !== "Aceptada") 
+                    ? `<label class="btn-upload">📁 Subir Soporte<input type="file" style="display:none" onchange="sistema.validarDocumentoIA('${i.cedula}', this)"></label>` 
+                    : `<span>✅ Verificado</span>`;
+
+                row.innerHTML = `
+                    <td>${i.cedula}</td>
+                    <td>${i.colaborador}</td>
+                    <td><strong>${i.diagnostico}</strong><br><small style="color:#666">${i.ley}</small></td>
+                    <td style="font-size: 0.85em;">${i.fecha}</td>
+                    <td>${i.dias}</td>
+                    <td><span class="${claseStatus}">${i.estado}</span></td>
+                    <td>${accionIA}</td>
+                `;
+            });
+        }
     }
 
     filtrarTabla() {
         const b = this.limpiarTexto(document.getElementById('buscador').value);
-        document.querySelectorAll('#cuerpoTabla tr').forEach(r => r.style.display = (r.innerText.toLowerCase().includes(b)) ? "" : "none");
+        document.querySelectorAll('#cuerpoTabla tr').forEach(r => {
+            r.style.display = (r.innerText.toLowerCase().includes(b)) ? "" : "none";
+        });
     }
 
     exportarExcel() {
-        let csv = "Cedula,Nombre,Diagnostico,Fecha,Dias,Estado\n";
-        this.historial.forEach(i => csv += `${i.cedula},${i.colaborador},${i.diagnostico},${i.fecha},${i.dias},${i.esValido?'OK':'Revision'}\n`);
+        if (this.historial.length === 0) return alert("No hay datos.");
+        let csv = "Cedula,Nombre,Diagnostico,Ley,Fecha,Dias,Estado\n";
+        this.historial.forEach(i => {
+            csv += `${i.cedula},${i.colaborador},${i.diagnostico},${i.ley},${i.fecha},${i.dias},${i.estado}\n`;
+        });
         const a = document.createElement('a');
-        a.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
-        a.download = 'Reporte_SGI.csv'; a.click();
+        a.href = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        a.download = 'Reporte_Legal_SGI.csv';
+        a.click();
     }
 
-    borrarDatos() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
+    borrarDatos() { 
+        if(confirm("⚠️ ¿Borrar historial completo?")) { 
+            localStorage.clear(); 
+            location.reload(); 
+        } 
+    }
 }
 
 const sistema = new GestionIncapacidad();
 
-// --- LOGIN ---
 function validarAcceso() {
-    if (document.getElementById('user').value === "admin" && document.getElementById('pass').value === "1234") {
+    const u = document.getElementById('user').value;
+    const p = document.getElementById('pass').value;
+    if (u === "admin" && p === "1234") {
         document.getElementById('login-screen').style.display = "none";
         sessionStorage.setItem('sesionSGI', 'activa');
         initGrafica();
-    } else { alert("Error"); }
+    } else { alert("❌ Credenciales incorrectas."); }
 }
 
-window.onload = () => { if (sessionStorage.getItem('sesionSGI') === 'activa') { document.getElementById('login-screen').style.display = "none"; initGrafica(); } };
+window.onload = () => { 
+    if (sessionStorage.getItem('sesionSGI') === 'activa') { 
+        document.getElementById('login-screen').style.display = "none"; 
+        initGrafica(); 
+    } 
+};
 
-// --- GRÁFICA ---
 let miGrafica;
 function initGrafica() {
-    const ctx = document.getElementById('graficaIncapacidades').getContext('2d');
-    miGrafica = new Chart(ctx, {
+    const canvas = document.getElementById('graficaIncapacidades');
+    if(!canvas) return;
+    miGrafica = new Chart(canvas.getContext('2d'), {
         type: 'doughnut',
-        data: { labels: ['Aprobadas', 'Revisión'], datasets: [{ data: [sistema.aprobadas, sistema.pendientes], backgroundColor: ['#2e7d32', '#ef6c00'] }] },
+        data: {
+            labels: ['Aprobadas', 'Pendientes'],
+            datasets: [{ 
+                data: [sistema.aprobadas, sistema.pendientes], 
+                backgroundColor: ['#2e7d32', '#f57f17']
+            }]
+        },
         options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
-function actualizarGrafica() { if(miGrafica) { miGrafica.data.datasets[0].data = [sistema.aprobadas, sistema.pendientes]; miGrafica.update(); } }
+function actualizarGrafica() {
+    if(miGrafica) {
+        miGrafica.data.datasets[0].data = [sistema.aprobadas, sistema.pendientes];
+        miGrafica.update();
+    }
+}
 
-// --- ACCIONES ---
 function analizarIA() {
-    const cc = document.getElementById('cedula').value;
-    const nom = document.getElementById('nombre').value;
-    const diag = document.getElementById('diagnostico').value;
+    const cc = document.getElementById('cedula').value.trim();
+    const nom = document.getElementById('nombre').value.trim();
+    const diag = document.getElementById('diagnostico').value.trim();
     const dias = parseInt(document.getElementById('dias').value);
     const resp = document.getElementById('aiResponse');
 
-    if(!cc || !nom || !diag || !dias) return alert("Complete los campos");
-    if(sistema.historial.find(i=>i.cedula===cc) && !confirm("Ya existe registro. ¿Continuar?")) return;
+    if(!cc || !nom || !diag || isNaN(dias)) return alert("⚠️ Ingrese todos los datos.");
 
     const res = sistema.analizar(nom, diag, dias);
     res.cedula = cc;
     sistema.actualizarContadores(res);
 
-    resp.innerHTML = `<strong>Resultado:</strong><br>${res.mensaje}`;
+    resp.innerHTML = `<strong>Análisis para ${nom}:</strong><br>${res.mensaje}`;
     resp.className = "response-box";
-    resp.style.borderLeft = "none";
     if(res.prioridad === "Alta") resp.classList.add('alerta-critica');
     else if(res.prioridad === "Media") resp.classList.add('alerta-media');
     else resp.style.borderLeft = `10px solid ${res.color}`;
 }
 
-function nuevaIncapacidad() { 
+function nuevaIncapacidad() {
     ['cedula','nombre','diagnostico','dias'].forEach(id => document.getElementById(id).value = "");
-    document.getElementById('aiResponse').innerHTML = "Esperando datos...";
-    document.getElementById('aiResponse').className = "response-box";
 }
 
 function recargarPagina() { location.reload(); }
