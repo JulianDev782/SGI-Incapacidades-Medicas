@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGI Pro - Gestión Humana Sodimac</title>
+    <title>SGI Pro - Gestión Humana Vector Tech</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div id="login-screen" class="login-overlay">
         <div class="login-box">
             <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
-            <h2>SGI Pro v5.9</h2>
+            <h2>SGI VECTOR-TECH</h2>
             <p style="color: #666; margin-bottom: 20px;">Acceso administrativo</p>
             <input type="text" id="user" placeholder="Usuario">
             <input type="password" id="pass" placeholder="Contraseña">
@@ -20,15 +20,19 @@
     </div>
 
     <div class="dashboard-container">
-        <aside class="sidebar">
-            <h2>SGI Pro</h2>
-            <nav>
-                <button onclick="nuevaIncapacidad()">➕ Nueva Entrada</button>
-                <button onclick="recargarPagina()">🔄 Actualizar</button>
-                <button onclick="window.print()">🖨️ Generar PDF</button>
-                <button class="btn-danger" onclick="sistema.borrarDatos()">🗑️ Resetear</button>
-            </nav>
-        </aside>
+       <aside class="sidebar">
+    <div class="sidebar-header" style="text-align: center; padding: 20px 10px;">
+        <img src="img-logo.jpeg" alt="Logo Vector Tech" style="width: 80px; height: auto; border-radius: 10px; margin-bottom: 10px;">
+        <h2 style="font-size: 1.2rem; margin: 0; color: white;">SGI <span style="color: #00ffa2;">VECTOR TECH</span></h2>
+    </div>
+    
+    <nav>
+        <button onclick="nuevaIncapacidad()">➕ Nueva Entrada</button>
+        <button onclick="recargarPagina()">🔄 Actualizar</button>
+        <button onclick="window.print()">🖨️ Generar PDF</button>
+        <button class="btn-danger" onclick="sistema.borrarDatos()">🗑️ Resetear</button>
+    </nav>
+       </aside>
 
         <main class="main-content">
             <header>
@@ -95,4 +99,5 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
+ <div class="watermark">SGI VECTOR TECH</div>
 </html>

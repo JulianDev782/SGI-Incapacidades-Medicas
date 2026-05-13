@@ -1,6 +1,6 @@
 /**
  * PROYECTO SGI - SISTEMA DE GESTIÓN DE INCAPACIDADES
- * Versión 6.5: Motor de Inferencia Diferenciado (SOAT vs ARL)
+ * Versión 6.6: Motor de Inferencia Estable (Corrección ARL)
  */
 
 class GestionIncapacidad {
@@ -35,9 +35,7 @@ class GestionIncapacidad {
             color: "#fbc02d" 
         };
 
-        // --- MOTOR DE INFERENCIA LEGAL MEJORADO ---
-
-        // 1. LICENCIAS LEGALES (Maternidad/Paternidad/Luto)
+        // --- MOTOR DE INFERENCIA LEGAL ---
         if (dL.match(/paternidad|maternidad|nacimiento|luto|fallecimiento/)) {
             if (dL.match(/luto|fallecimiento/)) {
                 res.ley = "Ley 1280 de 2009 (Ley de Luto)";
@@ -47,23 +45,20 @@ class GestionIncapacidad {
                 res.mensaje = `⚠️ **PENDIENTE:** Bajo la **${res.ley}**, el sistema requiere el Registro Civil de Nacimiento.`;
             }
         } 
-        // 2. ACCIDENTE DE TRÁNSITO (SOAT)
         else if (dL.match(/transito|soat|choque|atropellado|vehiculo|moto/)) {
             res.prioridad = "Media";
             res.ley = "Decreto 780 de 2016 (SOAT)";
             res.estado = "En Revisión";
-            res.color = "#ef6c00"; // Naranja
+            res.color = "#ef6c00";
             res.mensaje = `🚗 **ACCIDENTE DE TRÁNSITO:** Detectado evento vial. Según el **${res.ley}**, debe aportar croquis y certificado de atención médica inicial por SOAT.`;
         }
-        // 3. ACCIDENTE LABORAL (ARL)
         else if (dL.match(/accidente|fractura|laboral|caida|herida|quemadura|esfuerzo/)) {
             res.prioridad = "Alta";
             res.ley = "Ley 1562 de 2012 (Riesgos Laborales)";
             res.estado = "En Revisión";
-            res.color = "#d32f2f"; // Rojo
-            res.mensaje = `🚨 **ACCIDENTE LABORAL:** Posible riesgo profesional. Reportar FURAT bajo la **${res.ley}** a la ARL antes de 48 horas.`;
-        } 
-        // 4. ENFERMEDAD COMÚN (EPS)
+            res.color = "#d32f2f";
+            res.mensaje = `🚨 **ACCIDENTE LABORAL:** Posible riesgo profesional. Se debe **notificar de inmediato a la ARL** y radicar el reporte FURAT bajo la Ley 1562 antes de 48 horas.`;
+        }
         else {
             res.ley = "Decreto 1427 de 2022";
             if (dias <= 3) {
@@ -80,13 +75,11 @@ class GestionIncapacidad {
     validarDocumentoIA(cedula, input) {
         const file = input.files[0];
         if (!file) return;
-        
         const registroActual = this.historial.find(i => i.cedula == cedula);
         if (!registroActual) return alert("Error de sincronización.");
 
         const resp = document.getElementById('aiResponse');
-        resp.innerHTML = `🤖 **IA PROCESANDO:** Validando coherencia de soporte para "${registroActual.colaborador}"...`;
-        resp.className = "response-box alerta-media";
+        resp.innerHTML = `🤖 **IA PROCESANDO:** Validando soporte...`;
         
         setTimeout(() => {
             if (registroActual.estado !== "Aceptada") {
@@ -97,12 +90,7 @@ class GestionIncapacidad {
                 this.renderizarTodo();
                 actualizarGrafica();
             }
-            
-            const leyFinal = registroActual.ley || "Normativa Vigente";
-            resp.innerHTML = `🤖 **IA SODIMAC:** Soporte de **${registroActual.colaborador}** validado correctamente bajo la norma:<br><strong>${leyFinal}</strong>.`;
-            resp.className = "response-box";
-            resp.style.borderLeft = "10px solid #2e7d32";
-            
+            resp.innerHTML = `🤖 **IA:** Soporte validado correctamente bajo la norma:<br><strong>${registroActual.ley}</strong>.`;
             alert("🤖 IA: Documento validado con éxito.");
         }, 2000);
     }
@@ -134,12 +122,8 @@ class GestionIncapacidad {
         const resumen = document.getElementById('resumenGestion');
         if(resumen) {
             resumen.innerHTML = `
-                <div class="card module-card" style="border-bottom: 5px solid var(--primary);">
-                    <h4>Aprobadas</h4><p>${this.aprobadas}</p>
-                </div>
-                <div class="card module-card" style="border-bottom: 5px solid var(--warning);">
-                    <h4>Pendientes</h4><p>${this.pendientes}</p>
-                </div>
+                <div class="card module-card"><h4>Aprobadas</h4><p>${this.aprobadas}</p></div>
+                <div class="card module-card"><h4>Pendientes</h4><p>${this.pendientes}</p></div>
             `;
         }
 
@@ -150,19 +134,15 @@ class GestionIncapacidad {
                 const row = tabla.insertRow();
                 let claseStatus = i.estado === "Aceptada" ? "status-aceptada" : 
                                  (i.estado === "Pendiente" ? "status-pendiente" : "status-revision");
-
                 const accionIA = (i.estado !== "Aceptada") 
-                    ? `<label class="btn-upload">📁 Subir Soporte<input type="file" style="display:none" onchange="sistema.validarDocumentoIA('${i.cedula}', this)"></label>` 
+                    ? `<label class="btn-upload">📁 Subir<input type="file" style="display:none" onchange="sistema.validarDocumentoIA('${i.cedula}', this)"></label>` 
                     : `<span>✅ Verificado</span>`;
 
                 row.innerHTML = `
-                    <td>${i.cedula}</td>
-                    <td>${i.colaborador}</td>
-                    <td><strong>${i.diagnostico}</strong><br><small style="color:#666">${i.ley}</small></td>
-                    <td style="font-size: 0.85em;">${i.fecha}</td>
-                    <td>${i.dias}</td>
-                    <td><span class="${claseStatus}">${i.estado}</span></td>
-                    <td>${accionIA}</td>
+                    <td>${i.cedula}</td><td>${i.colaborador}</td>
+                    <td><strong>${i.diagnostico}</strong><br><small>${i.ley}</small></td>
+                    <td>${i.fecha}</td><td>${i.dias}</td>
+                    <td><span class="${claseStatus}">${i.estado}</span></td><td>${accionIA}</td>
                 `;
             });
         }
@@ -183,14 +163,13 @@ class GestionIncapacidad {
         });
         const a = document.createElement('a');
         a.href = window.URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        a.download = 'Reporte_Legal_SGI.csv';
+        a.download = 'Reporte_SGI.csv';
         a.click();
     }
 
     borrarDatos() { 
         if(confirm("⚠️ ¿Borrar historial completo?")) { 
-            localStorage.clear(); 
-            location.reload(); 
+            localStorage.clear(); location.reload(); 
         } 
     }
 }
@@ -245,17 +224,24 @@ function analizarIA() {
     const dias = parseInt(document.getElementById('dias').value);
     const resp = document.getElementById('aiResponse');
 
-    if(!cc || !nom || !diag || isNaN(dias)) return alert("⚠️ Ingrese todos los datos.");
+    if (!cc || !nom || !diag || isNaN(dias)) return alert("⚠️ Ingrese todos los datos.");
 
-    const res = sistema.analizar(nom, diag, dias);
-    res.cedula = cc;
-    sistema.actualizarContadores(res);
+    try {
+        const res = sistema.analizar(nom, diag, dias);
+        res.cedula = cc;
+        sistema.actualizarContadores(res);
 
-    resp.innerHTML = `<strong>Análisis para ${nom}:</strong><br>${res.mensaje}`;
-    resp.className = "response-box";
-    if(res.prioridad === "Alta") resp.classList.add('alerta-critica');
-    else if(res.prioridad === "Media") resp.classList.add('alerta-media');
-    else resp.style.borderLeft = `10px solid ${res.color}`;
+        resp.innerHTML = `<strong>Análisis para ${nom.toUpperCase()}:</strong><br>${res.mensaje}`;
+        resp.className = "response-box"; 
+        
+        if (res.prioridad === "Alta") resp.classList.add('alerta-critica');
+        else if (res.prioridad === "Media") resp.classList.add('alerta-media');
+        else resp.style.borderLeft = `10px solid ${res.color}`;
+
+    } catch (e) {
+        console.error(e);
+        alert("Error en el motor de reglas.");
+    }
 }
 
 function nuevaIncapacidad() {

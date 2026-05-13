@@ -122,3 +122,19 @@ td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; vertical-a
     transition: 0.3s;
 }
 .btn-upload:hover { background: var(--primary-dark); transform: scale(1.05); }
+
+
+  .watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 8rem;
+    color: rgba(0, 255, 162, 0.05); /* Verde muy transparente */
+    font-weight: 900;
+    pointer-events: none; /* Para que puedas hacer clic a través de ella */
+    z-index: 0;
+    user-select: none;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
